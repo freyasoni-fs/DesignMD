@@ -47,8 +47,12 @@ export default function Home() {
         const blob = new Blob([mdText], { type: 'text/markdown' });
         setMarkdownUrl(URL.createObjectURL(blob));
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
     } finally {
       setIsLoading(false);
     }

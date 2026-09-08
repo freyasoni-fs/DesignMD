@@ -1,16 +1,13 @@
 "use client";
 
 import React from "react";
-import Head from "next/head";
 
 export default function TestSite() {
   return (
     <>
-      <Head>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        `}</style>
-      </Head>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+      `}</style>
       <div style={{ backgroundColor: "#000000", minHeight: "100vh", fontFamily: "'Poppins', ui-sans-serif, sans-serif" }}>
         {/* Navigation */}
         <nav style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>

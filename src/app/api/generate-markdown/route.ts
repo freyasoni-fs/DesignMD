@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         'Content-Disposition': 'attachment; filename="design.md"',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Markdown generation failed:', error);
     return new NextResponse('Internal Error', { status: 500 });
   }

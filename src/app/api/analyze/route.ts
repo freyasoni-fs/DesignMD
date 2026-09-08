@@ -12,8 +12,9 @@ export async function POST(req: Request) {
     const designSystem = await analyzeWebsite(url);
 
     return NextResponse.json(designSystem);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Analysis failed:', error);
-    return NextResponse.json({ error: error.message || 'Failed to analyze website' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to analyze website';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

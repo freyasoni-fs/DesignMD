@@ -45,10 +45,13 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
       // but usually it does. To be safe across environments:
       await new Promise(r => setTimeout(r, 2000));
     }
-  } catch (error: any) {
-    if (!error.message.includes('Timeout')) {
+  } catch (error: unknown) {
+    if (error instanceof Error && !error.message.includes('Timeout')) {
       await browser.close();
-      throw new Error(`Failed to load page: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to load page: ${error.message}`);
+    } else if (!(error instanceof Error)) {
+      await browser.close();
+      throw new Error(`Failed to load page: Unknown error`);
     }
     // If it's just a timeout, we proceed! The DOM is likely loaded enough to extract colors.
   }
@@ -61,9 +64,9 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
     };
 
     const colorsMap = new Map<string, { rgb: string, hex: string, count: number }>();
-    const typography = new Map<string, any>();
+    const typography = new Map<string, { tag: string, fontFamily: string, weight: string, size: string, lineHeight: string, letterSpacing: string, color: string }>();
     const shadows = new Set<string>();
-    const buttonStylesMap = new Map<string, any>();
+    const buttonStylesMap = new Map<string, { className: string, background: string, color: string, borderRadius: string, padding: string, fontSize: string, fontWeight: string, border: string }>();
     const cssVariables: { name: string, value: string }[] = [];
     const fontsMap = new Map<string, string>();
 
@@ -159,7 +162,7 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
       for (let i = 0; i < document.styleSheets.length; i++) {
         const sheet = document.styleSheets[i];
         try {
-          const rules = sheet.cssRules || sheet.rules;
+          const rules = sheet.cssRules;
           for (let j = 0; j < rules.length; j++) {
             const rule = rules[j];
             if (rule instanceof CSSFontFaceRule) {
