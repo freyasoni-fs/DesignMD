@@ -184,6 +184,28 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
         }
       } catch (e) {}
 
+      // Extract icons (SVGs and img src)
+      const icons: { name: string, library: string, size: string, svgHtml: string }[] = [];
+      const iconElements = document.querySelectorAll('svg, img[src$=".svg"], i[class*="icon"], span[class*="icon"]');
+      let iconCounter = 1;
+      
+      iconElements.forEach(el => {
+        if (icons.length >= 15) return; // Limit to 15 icons to avoid huge payloads
+        const style = window.getComputedStyle(el);
+        const size = `${style.width} x ${style.height}`;
+        
+        if (el.tagName.toLowerCase() === 'svg') {
+          // Truncate huge SVGs
+          let html = el.outerHTML;
+          if (html.length > 500) html = html.substring(0, 500) + '...';
+          icons.push({ name: `icon-svg-${iconCounter++}`, library: 'inline-svg', size, svgHtml: html });
+        } else if (el.tagName.toLowerCase() === 'img') {
+          icons.push({ name: `icon-img-${iconCounter++}`, library: 'img-url', size, svgHtml: (el as HTMLImageElement).src });
+        } else {
+          icons.push({ name: el.className, library: 'icon-font', size, svgHtml: `<${el.tagName.toLowerCase()} class="${el.className}"></${el.tagName.toLowerCase()}>` });
+        }
+      });
+
       return {
         title: document.title,
         colors: Array.from(colorsMap.values()).sort((a, b) => b.count - a.count),
@@ -191,7 +213,8 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
         shadows: Array.from(shadows),
         buttonStyles: Array.from(buttonStylesMap.values()),
         cssVariables,
-        fonts: Array.from(fontsMap.entries()).map(([family, source]) => ({ family, source }))
+        fonts: Array.from(fontsMap.entries()).map(([family, source]) => ({ family, source })),
+        icons
       };
     });
   } finally {
@@ -222,7 +245,7 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
     colors: colorTokens,
     typography: rawData.typography,
     fonts: rawData.fonts.map(f => ({ family: f.family, source: f.source, weights: [] })),
-    icons: [],
+    icons: rawData.icons,
     spacing: [],
     radius: [],
     components: [],

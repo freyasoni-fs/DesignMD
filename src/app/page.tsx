@@ -10,6 +10,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [markdownUrl, setMarkdownUrl] = useState<string | null>(null);
+  
+  // Apply Design states
+  const [mode, setMode] = useState<'extract' | 'apply'>('extract');
+  const [themeCode, setThemeCode] = useState<{css: string, tailwind: string} | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [themeTab, setThemeTab] = useState<'css' | 'tailwind'>('css');
 
   const analyzeWebsite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,33 +64,143 @@ export default function Home() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsGenerating(true);
+    setError(null);
+    setThemeCode(null);
+
+    try {
+      const text = await file.text();
+      const res = await fetch("/api/generate-theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markdown: text }),
+      });
+
+      if (!res.ok) throw new Error("Failed to generate theme");
+
+      const data = await res.json();
+      setThemeCode(data);
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError(String(err));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans selection:bg-orange-500/30">
       <div className="max-w-6xl mx-auto space-y-10">
         <div className="text-center space-y-4 pt-12">
           <h1 className="text-5xl font-extrabold tracking-tight text-blue-950">
-            Design <span className="text-[#F37021]">Extractor</span>
+            Design <span className="text-[#F37021]">{mode === 'extract' ? 'Extractor' : 'Generator'}</span>
           </h1>
-          <p className="text-lg text-slate-600">Turn any website into an AI-ready design system.</p>
+          <p className="text-lg text-slate-600">
+            {mode === 'extract' ? 'Turn any website into an AI-ready design system.' : 'Upload a design.md file to instantly generate CSS and Tailwind themes.'}
+          </p>
         </div>
 
-        <form onSubmit={analyzeWebsite} className="max-w-2xl mx-auto flex gap-4">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            required
-            className="flex-1 px-5 py-4 rounded-xl bg-white border border-slate-300 shadow-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-[#F37021] focus:border-[#F37021] outline-none transition"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-8 py-4 bg-[#F37021] text-white font-bold rounded-xl shadow-lg shadow-[#F37021]/30 hover:bg-[#d95e16] hover:shadow-[#F37021]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {isLoading ? "Analyzing..." : "Analyze Website"}
-          </button>
-        </form>
+        <div className="flex justify-center mb-8">
+          <div className="bg-slate-200 p-1 rounded-lg flex gap-1">
+            <button
+              onClick={() => setMode('extract')}
+              className={`px-6 py-2 rounded-md font-medium text-sm transition ${mode === 'extract' ? 'bg-white text-blue-950 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Extract Design
+            </button>
+            <button
+              onClick={() => setMode('apply')}
+              className={`px-6 py-2 rounded-md font-medium text-sm transition ${mode === 'apply' ? 'bg-white text-blue-950 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Apply Design
+            </button>
+          </div>
+        </div>
+
+        {mode === 'extract' && (
+          <form onSubmit={analyzeWebsite} className="max-w-2xl mx-auto flex gap-4">
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+              required
+              className="flex-1 px-5 py-4 rounded-xl bg-white border border-slate-300 shadow-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-[#F37021] focus:border-[#F37021] outline-none transition"
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-8 py-4 bg-[#F37021] text-white font-bold rounded-xl shadow-lg shadow-[#F37021]/30 hover:bg-[#d95e16] hover:shadow-[#F37021]/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isLoading ? "Analyzing..." : "Analyze Website"}
+            </button>
+          </form>
+        )}
+
+        {mode === 'apply' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            {!themeCode && (
+              <div className="flex justify-center border-2 border-dashed border-slate-300 rounded-xl p-12 bg-white hover:border-[#F37021] transition">
+                <label className="flex flex-col items-center cursor-pointer">
+                  <span className="text-4xl mb-4">📁</span>
+                  <span className="text-lg font-bold text-slate-700">Upload design.md</span>
+                  <span className="text-sm text-slate-500 mt-2">Select the file extracted from a website</span>
+                  <input type="file" accept=".md" className="hidden" onChange={handleFileUpload} />
+                </label>
+              </div>
+            )}
+            
+            {isGenerating && (
+              <div className="text-center p-4 text-[#F37021] font-bold animate-pulse">
+                Generating theme files...
+              </div>
+            )}
+
+            {themeCode && (
+              <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                <div className="flex bg-slate-800 p-2 gap-2">
+                  <button
+                    onClick={() => setThemeTab('css')}
+                    className={`px-4 py-2 rounded text-sm font-bold ${themeTab === 'css' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    globals.css
+                  </button>
+                  <button
+                    onClick={() => setThemeTab('tailwind')}
+                    className={`px-4 py-2 rounded text-sm font-bold ${themeTab === 'tailwind' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    tailwind.config.ts
+                  </button>
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(themeTab === 'css' ? themeCode.css : themeCode.tailwind);
+                      alert('Copied to clipboard!');
+                    }}
+                    className="px-4 py-2 bg-[#F37021] text-white text-sm font-bold rounded hover:bg-[#d95e16] transition"
+                  >
+                    Copy Code
+                  </button>
+                  <button
+                    onClick={() => setThemeCode(null)}
+                    className="px-4 py-2 bg-slate-600 text-white text-sm font-bold rounded hover:bg-slate-500 transition"
+                  >
+                    Upload Another
+                  </button>
+                </div>
+                <div className="p-4 bg-slate-900 overflow-x-auto max-h-[600px] overflow-y-auto">
+                  <pre className="text-slate-300 font-mono text-sm">
+                    {themeTab === 'css' ? themeCode.css : themeCode.tailwind}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="max-w-2xl mx-auto p-5 bg-red-50 text-red-600 border border-red-200 rounded-xl">

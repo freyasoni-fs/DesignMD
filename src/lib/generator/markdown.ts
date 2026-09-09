@@ -59,6 +59,15 @@ tags: ["auto-extracted", "design-system"]
     });
   }
 
+  if (system.icons && system.icons.length > 0) {
+    md += `\n### Extracted Icons\n\n| Name | Library | Size | Raw HTML/Src |\n|---|---|---|---|\n`;
+    system.icons.forEach(icon => {
+      // Escape backticks and pipes in SVG html
+      const safeHtml = (icon.svgHtml || '').replace(/\|/g, '\\|').replace(/`/g, '\\`');
+      md += `| ${icon.name} | ${icon.library} | ${icon.size} | \`<div>${safeHtml}</div>\` |\n`;
+    });
+  }
+
   md += `\n## 4. Component Stylings\n\n`;
   system.buttonStyles.forEach(btn => {
     md += `### ${btn.className}\n\n\`\`\`css\n.${btn.className} {\n  background: ${btn.background};\n  color: ${btn.color};\n  border-radius: ${btn.borderRadius};\n  padding: ${btn.padding};\n  font-size: ${btn.fontSize};\n  font-weight: ${btn.fontWeight};\n  border: ${btn.border};\n}\n\`\`\`\n\n`;
