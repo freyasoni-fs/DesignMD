@@ -18,23 +18,24 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
 
   let browser;
   if (isVercel) {
-    const playwrightCore = await import('playwright-core');
+    const puppeteerCore = await import('puppeteer-core');
     const sparticuz = (await import('@sparticuz/chromium-min')).default;
     
     // Sparticuz requires this specific graphics configuration for modern serverless
     sparticuz.setGraphicsMode = false;
     
-    browser = await playwrightCore.chromium.launch({
+    browser = await puppeteerCore.launch({
       args: sparticuz.args,
       executablePath: await sparticuz.executablePath('https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'),
       headless: sparticuz.headless === 'shell' ? true : (sparticuz.headless as boolean),
     });
   } else {
-    const playwright = await import('playwright');
-    browser = await playwright.chromium.launch({ headless: true });
+    const puppeteer = await import('puppeteer-core');
+    // Local fallback: usually requires standard puppeteer installed, but assuming Vercel deployment.
+    browser = await puppeteer.launch({ headless: true });
   }
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  
+  const page = await browser.newPage();
 
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
