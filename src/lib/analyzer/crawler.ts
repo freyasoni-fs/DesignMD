@@ -19,14 +19,11 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
   let browser;
   if (isVercel) {
     const puppeteerCore = await import('puppeteer-core');
-    const sparticuz = (await import('@sparticuz/chromium-min')).default;
-    
-    // Sparticuz requires this specific graphics configuration for modern serverless
-    sparticuz.setGraphicsMode = false;
+    const sparticuz = (await import('@sparticuz/chromium')).default;
     
     browser = await puppeteerCore.launch({
       args: sparticuz.args,
-      executablePath: await sparticuz.executablePath('https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'),
+      executablePath: await sparticuz.executablePath(),
       headless: sparticuz.headless === 'shell' ? true : (sparticuz.headless as boolean),
     });
   } else {
