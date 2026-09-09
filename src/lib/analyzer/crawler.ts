@@ -27,7 +27,7 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
     browser = await playwrightCore.chromium.launch({
       args: sparticuz.args,
       executablePath: await sparticuz.executablePath(),
-      headless: !!sparticuz.headless,
+      headless: sparticuz.headless === 'shell' ? true : (sparticuz.headless as boolean),
     });
   } else {
     const playwright = await import('playwright');
