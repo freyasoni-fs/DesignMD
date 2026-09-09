@@ -24,7 +24,7 @@ export async function analyzeWebsite(url: string): Promise<ExtractedDesignSystem
     browser = await puppeteerCore.launch({
       args: sparticuz.args,
       executablePath: await sparticuz.executablePath(),
-      headless: sparticuz.headless === 'shell' ? true : (sparticuz.headless as boolean),
+      headless: true,
     });
   } else {
     const puppeteer = await import('puppeteer-core');
