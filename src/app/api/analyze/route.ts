@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { analyzeWebsite } from '@/lib/analyzer/crawler';
 
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   try {
     const { url } = await req.json();
